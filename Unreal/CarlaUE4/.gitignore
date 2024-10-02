@@ -13,7 +13,7 @@ Plugins/Carla/DerivedDataCache
 Plugins/Carla/Intermediate
 Plugins/Carla/Saved
 
-/Content
+/Content/*
 Config/CarlaSettings.ini
 Config/DefaultEditor.ini
 Config/CarSimConfig.ini
@@ -23,3 +23,6 @@ Config/CarSimConfig.ini
 .vscode
 CMakeLists.txt
 Makefile
+
+# CSE 498 Changes
+!/Content/CSE498
