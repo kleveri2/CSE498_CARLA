@@ -25,5 +25,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void ClearDebris();
+	UFUNCTION(BlueprintCallable)
+		static UWorld* MyGetWorld();
 
 };
