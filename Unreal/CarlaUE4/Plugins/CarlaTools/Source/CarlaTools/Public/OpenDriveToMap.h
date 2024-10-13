@@ -167,7 +167,47 @@ public:
   UPROPERTY( EditAnywhere, BlueprintReadWrite, Category="Heightmap" )
   float MaxHeight;
 
+  UPROPERTY(BlueprintReadWrite, Category = "Widgets")
+      class UDigitalTwinsBaseWidget* DigitalTwinsWidget;
 
+  UFUNCTION(BlueprintCallable, Category = "Widgets")
+      void SetDigitalTwinsBaseWidget(UDigitalTwinsBaseWidget* Widget);
+
+  UFUNCTION(BlueprintCallable, Category = "Preprocess")
+      void SetFileDownloader(UCustomFileDownloader* Downloader);
+
+  UFUNCTION(BlueprintCallable, Category = "Preprocess")
+      UCustomFileDownloader* GetFileDownloader() const;
+
+  UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
+      float RemovalPercentage;
+
+  UFUNCTION(BlueprintCallable)
+      void SetRemovalPercentage(float InPercentage);
+
+  UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
+      float BuildMinHeight;
+
+  UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
+      float BuildMaxHeight;
+
+  UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
+      float MinLevel;
+
+  UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
+      float MaxLevel;
+
+  UFUNCTION(BlueprintCallable)
+      void BuildSetMinHeight(float InBuildMinHeight);
+
+  UFUNCTION(BlueprintCallable)
+      void BuildSetMaxHeight(float InBuildMaxHeight);
+
+  UFUNCTION(BlueprintCallable)
+      void SetMinLevel(float InMinLevel);
+
+  UFUNCTION(BlueprintCallable)
+      void SetMaxLevel(float InMaxLevel);
 protected:
 
   UFUNCTION(BlueprintCallable)
@@ -187,6 +227,7 @@ protected:
   void MoveActorsToSubLevels(TArray<AActor*> ActorsToMove);
 
 private:
+  static UOpenDriveToMap* Instance;
 
   UFUNCTION()
   void OpenFileDialog();

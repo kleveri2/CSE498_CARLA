@@ -63,6 +63,60 @@ UOpenDriveToMap::~UOpenDriveToMap()
 
 }
 
+UCustomFileDownloader* UOpenDriveToMap::GetFileDownloader() const
+{
+    return FileDownloader;
+}
+
+void UOpenDriveToMap::SetFileDownloader(UCustomFileDownloader* Downloader)
+{
+    FileDownloader = Downloader;
+    UE_LOG(LogTemp, Warning, TEXT("CustomFileDownloader set in OpenDriveToMap."));
+}
+
+void UOpenDriveToMap::SetDigitalTwinsBaseWidget(UDigitalTwinsBaseWidget* Widget)
+{
+    if (Widget)
+    {
+        DigitalTwinsWidget = Widget;
+        UE_LOG(LogTemp, Warning, TEXT("DigitalTwinsBaseWidget set in OpenDriveToMap."));
+    }
+    else
+    {
+        UE_LOG(LogTemp, Error, TEXT("Failed to set DigitalTwinsBaseWidget in OpenDriveToMap."));
+    }
+}
+
+void UOpenDriveToMap::SetRemovalPercentage(float InPercentage)
+{
+    RemovalPercentage = InPercentage;
+    UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("opendrive Percentage value: %f"), InPercentage);
+}
+
+void UOpenDriveToMap::BuildSetMinHeight(float InBuildMinHeight)
+{
+    BuildMinHeight = InBuildMinHeight;
+    UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("opendrive Min Height value: %f"), InBuildMinHeight);
+}
+
+void UOpenDriveToMap::BuildSetMaxHeight(float InBuildMaxHeight)
+{
+    BuildMaxHeight = InBuildMaxHeight;
+    UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("opendrive Max Height value: %f"), InBuildMaxHeight);
+}
+
+void UOpenDriveToMap::SetMinLevel(float InMinLevel)
+{
+    MinLevel = InMinLevel;
+    UE_LOG(LogTemp, Warning, TEXT("Removal Percentage set to: %f"), InMinLevel);
+}
+
+void UOpenDriveToMap::SetMaxLevel(float InMaxLevel)
+{
+    MaxLevel = InMaxLevel;
+    UE_LOG(LogTemp, Warning, TEXT("Removal Percentage set to: %f"), InMaxLevel);
+}
+
 FString LaneTypeToFString(carla::road::Lane::LaneType LaneType)
 {
   switch (LaneType)
@@ -161,9 +215,16 @@ void UOpenDriveToMap::CreateMap()
       FileDownloader = NewObject<UCustomFileDownloader>();
     }
 
+    FileDownloader->SetRemovalPercentage(RemovalPercentage);
+    FileDownloader->BuildSetMinHeight(BuildMinHeight);
+    FileDownloader->BuildSetMaxHeight(BuildMaxHeight);
+    FileDownloader->SetMinLevel(MinLevel);
+    FileDownloader->SetMaxLevel(MaxLevel);
+
+
     FileDownloader->ResultFileName = MapName;
     FileDownloader->Url = Url;
-
+    
     FileDownloader->DownloadDelegate.BindUObject( this, &UOpenDriveToMap::ConvertOSMInOpenDrive );
     FileDownloader->StartDownload();
   }
