@@ -17,8 +17,9 @@ def apply_sign_nodes(G, stop_tag, speed_tag, yield_tag):
             speed_location = Point(road_geom.coords[mindex])
             speed_locations.append((speed_location.x, speed_location.y))
 
-            yield_location = Point(road_geom.coords[-1])
-            yield_locations.append((yield_location.x, yield_location.y))
+            # yield_location = Point(road_geom.coords[-1])
+            # yield_locations.append((yield_location.x, yield_location.y))
+    print('stop locations:\n', stop_locations)
     return stop_locations, speed_locations, yield_locations
 
 def plot_map_with_signs(G, stops, limits, yields):
