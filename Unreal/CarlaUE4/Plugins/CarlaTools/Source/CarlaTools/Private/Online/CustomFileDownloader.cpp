@@ -61,9 +61,9 @@ std::string regex_escape(const std::string& str)
 
 std::string UCustomFileDownloader::PreProcess(const std::string& content)
 {
-    //std::string result = editBuildingAmount(content);
-    //result = editBuildingHeights(result, MinHeight, MaxHeight);
-    //result = editBuildingLevels(result, MinLevel, MaxLevel);
+    std::string result = editBuildingAmount(content);
+    result = editBuildingHeights(result, MinHeight, MaxHeight);
+    result = editBuildingLevels(result, MinLevel, MaxLevel);
 
 
     return content;
@@ -397,7 +397,7 @@ void UCustomFileDownloader::ConvertOSMInOpenDrive(FString FilePath, float Lat_0,
         // Apply lane modification
         std::string XodrFileContentStr = std::string(TCHAR_TO_UTF8(*XodrFileContent));
         //XodrFileContentStr = editLanes(XodrFileContentStr, 1, 1);
-        //XodrFileContentStr = editElevation(XodrFileContentStr);
+        XodrFileContentStr = editElevation(XodrFileContentStr);
         // Save the modified OpenDRIVE file
         if (FFileHelper::SaveStringToFile(FString(XodrFileContentStr.c_str()), *FilePath))
         {
