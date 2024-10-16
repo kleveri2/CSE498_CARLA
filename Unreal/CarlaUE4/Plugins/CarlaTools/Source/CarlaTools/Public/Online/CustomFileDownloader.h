@@ -63,6 +63,7 @@ public:
 
   FString Url;
 
+  std::string editElevation(const std::string& xodrContent);
   std::string editBuildingAmount(const std::string& content);
   std::string editBuildingLevels(const std::string& content, int minLevels, int maxLevels);
   std::string editBuildingHeights(const std::string& content, float minHeight, float maxHeight);

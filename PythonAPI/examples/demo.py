@@ -69,7 +69,7 @@ def main():
         while True:
             spectator=world.get_spectator()
             transform=vehicle.get_transform()
-            spectator.set_transform(carla.Transform(transform.location+carla.Location(z=20),carla.Rotation(pitch=-90)))
+            spectator.set_transform(carla.Transform(vehicle.get_transform().transform(carla.Location(x=-10,z=2)),vehicle.get_transform().rotation))
     finally:
         client.apply_batch([carla.command.DestroyActor(x) for x in actor_list])
         for sensor in sensor_list:
