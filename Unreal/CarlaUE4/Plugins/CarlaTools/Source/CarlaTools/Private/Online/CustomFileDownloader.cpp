@@ -21,6 +21,8 @@
 
 #include <OSM2ODR.h>
 
+///https://portal.opentopography.org/API/globaldem?demtype=NASADEM&south=45.196&north=49&west=-122.66&east=-119.95&outputFormat=GTiff&API_Key=d54b0fdd6de0f7a46aa17d4a0a9b8624
+
 void UCustomFileDownloader::SetRemovalPercentage(float Percentage)
 {
     UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("custom file Percentage Set to value: %f"), Percentage);
@@ -59,12 +61,60 @@ std::string regex_escape(const std::string& str)
 
 std::string UCustomFileDownloader::PreProcess(const std::string& content)
 {
-    std::string result = editBuildingAmount(content);
-    result = editBuildingHeights(result, MinHeight, MaxHeight);
-    result = editBuildingLevels(result, MinLevel, MaxLevel);
+    //std::string result = editBuildingAmount(content);
+    //result = editBuildingHeights(result, MinHeight, MaxHeight);
+    //result = editBuildingLevels(result, MinLevel, MaxLevel);
 
 
-    return result;
+    return content;
+}
+
+std::string UCustomFileDownloader::editElevation(const std::string& content)
+{
+    std::string elevationPattern = R"elevation(<elevation\s+s="([\d\.]+)"\s+a="([\d\.\-]+)"\s+b="([\d\.\-]+)"\s+c="([\d\.\-]+)"\s+d="([\d\.\-]+)"[^>]*>)elevation";
+
+    std::regex elevationRegex(elevationPattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
+
+    std::ostringstream outputBuffer;
+    size_t lastPos = 0;
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> slopeDist(-0.001, 0.001);  // slope between needs to be way less than .02 add input limits in later
+
+    auto it = std::sregex_iterator(content.begin(), content.end(), elevationRegex);
+    auto end = std::sregex_iterator();
+
+    for (; it != end; ++it)
+    {
+        std::smatch match = *it;
+
+        float s = std::stof(match.str(1));
+        float a = std::stof(match.str(2));
+        float b = std::stof(match.str(3));
+        float c = std::stof(match.str(4));
+        float d = std::stof(match.str(5));
+
+        // Apply slope
+        float newA = a + slopeDist(gen);
+        float newB = b + slopeDist(gen);
+
+        std::string adjustedTag = "<elevation s=\"" + std::to_string(s) +
+            "\" a=\"" + std::to_string(newA) +
+            "\" b=\"" + std::to_string(newB) +
+            "\" c=\"" + std::to_string(c) +
+            "\" d=\"" + std::to_string(d) + "\"/>";
+
+        outputBuffer << content.substr(lastPos, match.position() - lastPos);
+
+        outputBuffer << adjustedTag;
+
+        lastPos = match.position() + match.length();
+    }
+
+    outputBuffer << content.substr(lastPos);
+
+    return outputBuffer.str();
 }
 
 std::string UCustomFileDownloader::editBuildingAmount(const std::string& content)
@@ -228,17 +278,14 @@ std::string UCustomFileDownloader::editLanes(const std::string& content, float m
 std::string UCustomFileDownloader::editBuildingHeights(const std::string& content, float minHeight, float maxHeight)
 {
     int buildingHeightMultiplier = 1;
-    // Regular string pattern for matching <tag k="height" v="X"/> elements
+   
     std::string heightPattern = "<tag k=\"height\" v=\"([\\d\\.]+)\"[^>]*>";
 
-    // Use regex to find all <tag k="height" v="X"/> elements
     std::regex heightRegex(heightPattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
 
-    // Create an output buffer to hold the modified content
     std::ostringstream outputBuffer;
     size_t lastPos = 0;
 
-    // Use a regex iterator to collect all matches
     auto it = std::sregex_iterator(content.begin(), content.end(), heightRegex);
     auto end = std::sregex_iterator();
 
@@ -246,7 +293,6 @@ std::string UCustomFileDownloader::editBuildingHeights(const std::string& conten
     {
         std::smatch match = *it;
 
-        // Extract the current height value
         std::string matchedTag = match.str();
         float currentHeight = std::stof(match.str(1));  
 
@@ -260,7 +306,7 @@ std::string UCustomFileDownloader::editBuildingHeights(const std::string& conten
             adjustedHeight = std::min(adjustedHeight, maxHeight);
         }
 
-        // Create the new tag with the adjusted height
+ 
         std::string adjustedTag = "<tag k=\"height\" v=\"" + std::to_string(adjustedHeight) + "\"/>";
 
         outputBuffer << content.substr(lastPos, match.position() - lastPos);
@@ -350,8 +396,8 @@ void UCustomFileDownloader::ConvertOSMInOpenDrive(FString FilePath, float Lat_0,
     {
         // Apply lane modification
         std::string XodrFileContentStr = std::string(TCHAR_TO_UTF8(*XodrFileContent));
-        //XodrFileContentStr = editLanes(XodrFileContentStr, 1, 1);  // Call your editLanes function here
-
+        //XodrFileContentStr = editLanes(XodrFileContentStr, 1, 1);
+        //XodrFileContentStr = editElevation(XodrFileContentStr);
         // Save the modified OpenDRIVE file
         if (FFileHelper::SaveStringToFile(FString(XodrFileContentStr.c_str()), *FilePath))
         {
