@@ -7,13 +7,13 @@ import random
 import warnings
 import Add_Signs
 def bounding_box(lat, lon, side_km):
-        center = Point(lat, lon)
-        d = side_km / 2.0
-        north = geodesic(kilometers=d).destination(center, bearing=0)
-        south = geodesic(kilometers=d).destination(center, bearing=180)
-        east = geodesic(kilometers=d).destination(center, bearing=90)
-        west = geodesic(kilometers=d).destination(center, bearing=270)
-        return north.latitude, south.latitude, east.longitude, west.longitude
+    center = Point(lat, lon)
+    d = side_km / 2.0
+    north = geodesic(kilometers=d).destination(center, bearing=0)
+    south = geodesic(kilometers=d).destination(center, bearing=180)
+    east = geodesic(kilometers=d).destination(center, bearing=90)
+    west = geodesic(kilometers=d).destination(center, bearing=270)
+    return north.latitude, south.latitude, east.longitude, west.longitude
 def find_locations(road_density, area_in_km, samples = 100, max_retries = 5):
     side_km = area_in_km ** .5
     acceptable_range = .5 #50% tolerance (aka, if i put in road density of 10, it will look for near fits, between 7.5 and 12.5
@@ -43,27 +43,27 @@ def find_locations(road_density, area_in_km, samples = 100, max_retries = 5):
                     print(f"Error1, location Skipped:: {ve}")
                     continue
                 except Exception as e:
-                    print(f"Error2, bad location:: {e}")
+                    print(f"Error2, Invalid Road Density:: {e}")
                     continue
     return None
+
 def plot_road(G):
     fig, ax = ox.plot_graph(G, show=False, close=False)
     plt.title('Road Network of Found Location')
     plt.show()
+
 def find(road_density=20, area_in_km=1, sample_size=50):
-    
-    # road_density = float(input("Enter desired road density (km/km^2): "))
-    # area_in_km = float(input("Enter desired area (km^2): "))
-    # sample_size = int(input("Enter number of attempts: "))
     found_location = find_locations(road_density, area_in_km, sample_size)
     if found_location:
         lat, lon, road_density, G = found_location
-        print("fLatitude: {lat:.6f}, Longitude: {lon:.6f}, Road Density: {rd:.2f} km/km²")
+        print("Plotting Map")
         plot_road(G)
-        Add_Signs.Add_Signs(G)
 
         side_km = area_in_km ** 0.5
         north_lat, south_lat, east_lon, west_lon = bounding_box(lat, lon, side_km)
+
+        Add_Signs.Add_Signs(G, north_lat, south_lat, east_lon, west_lon)
+
         print("fetching map")
         overpass_url = "http://overpass-api.de/api/map?bbox="
         search = str(west_lon) + "," + str(south_lat) + "," + str(east_lon) + "," + str(north_lat)
@@ -75,7 +75,7 @@ def find(road_density=20, area_in_km=1, sample_size=50):
         print("No location found")
 
 def main():
-    nv = find(20, 1, 50)
+    nv = find(15, 2, 20)
 
 if __name__ == "__main__":
     main()
