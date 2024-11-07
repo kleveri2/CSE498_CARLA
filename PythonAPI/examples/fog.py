@@ -1,7 +1,6 @@
 import glob
 import os
 import sys
-import carla
 
 try:
     sys.path.append(glob.glob('../carla/dist/carla-*%d.%d-%s.egg' % (
@@ -10,6 +9,8 @@ try:
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
 except IndexError:
     pass
+
+import carla
 
 def set_sunny_weather(world):
     weather = carla.WeatherParameters(

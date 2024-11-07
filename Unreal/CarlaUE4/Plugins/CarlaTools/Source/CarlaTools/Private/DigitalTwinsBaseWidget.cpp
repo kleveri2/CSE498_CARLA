@@ -64,6 +64,12 @@ void UDigitalTwinsBaseWidget::SetMaxLevel(float InMaxLevel)
     UE_LOG(LogTemp, Warning, TEXT("Max Level set to: %f"), InMaxLevel);
 }
 
+void UDigitalTwinsBaseWidget::SetElevation(float InElevation)
+{
+    Elevation = InElevation;
+    UE_LOG(LogTemp, Warning, TEXT("Elevation set to: %f"), Elevation );
+}
+
 float UDigitalTwinsBaseWidget::GetRemovalPercentage()
 {
     UE_LOG(LogTemp, Warning, TEXT("Getting removal Percentage: %f"), RemovalPercentage);
@@ -80,6 +86,7 @@ void UDigitalTwinsBaseWidget::PassDigitalTwinsBaseWidgetToOpenDrive(UOpenDriveTo
         OpenDriveInstance->BuildSetMaxHeight(MaxHeight);
         OpenDriveInstance->SetMinLevel(MinLevel);
         OpenDriveInstance->SetMaxLevel(MaxLevel);
+        OpenDriveInstance->SetElevation(Elevation);
         UE_LOG(LogTemp, Warning, TEXT("DigitalTwinsBaseWidget passed to OpenDriveToMap."));
     }
     else

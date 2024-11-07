@@ -63,7 +63,7 @@ public:
 
   FString Url;
 
-  std::string editElevation(const std::string& xodrContent);
+  std::string editElevation(FString FilePath, std::string& xodrContent);
   std::string editBuildingAmount(const std::string& content);
   std::string editBuildingLevels(const std::string& content, int minLevels, int maxLevels);
   std::string editBuildingHeights(const std::string& content, float minHeight, float maxHeight);
@@ -71,6 +71,8 @@ public:
   std::string editLanes(const std::string& content, float minLanes, float maxLanes);
 
   std::string PreProcess(const std::string& content);
+
+  FString OSMToXODR(FString FilePath);
 
   UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
       float RemovalPercentage;
@@ -80,6 +82,9 @@ public:
 
   UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
       float MaxHeight;
+
+  UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
+      float Elevation;
 
   UFUNCTION(BlueprintCallable)
       void BuildSetMinHeight(float InMinHeight);
@@ -101,6 +106,9 @@ public:
 
   UFUNCTION(BlueprintCallable)
       void SetMaxLevel(float InMaxLevel);
+
+  UFUNCTION(BlueprintCallable)
+      void SetElevation(float InElevation);
 
   FDownloadComplete DownloadDelegate;
 private:

@@ -197,6 +197,12 @@ public:
   UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
       float MaxLevel;
 
+  UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
+      float Elevation;
+
+  UFUNCTION(BlueprintCallable)
+      void SetElevation(float InElevation);
+
   UFUNCTION(BlueprintCallable)
       void BuildSetMinHeight(float InBuildMinHeight);
 

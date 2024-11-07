@@ -75,3 +75,60 @@ void UDebrisGenerationWidget::OverWriteMesh(UStaticMesh* Mesh, UStaticMesh* NewM
     MeshDescriptionPtrs.Emplace(&Okay);
     Mesh->BuildFromMeshDescriptions(MeshDescriptionPtrs);
 }
+
+void UDebrisGenerationWidget::Weather(float choice)
+{
+    FString Python = TEXT("python");
+    FString Script;
+
+    FString Dir = FPaths::ProjectDir();
+
+    Dir = Dir.Replace(TEXT("/Unreal/CarlaUE4"), TEXT("")); 
+
+    if (choice == 0)
+    {
+        Script = FPaths::Combine(Dir, TEXT("PythonAPI"), TEXT("examples"), TEXT("rain.py"));
+    }
+    else if (choice == 1)
+    {
+        Script = FPaths::Combine(Dir, TEXT("PythonAPI"), TEXT("examples"), TEXT("wind.py"));
+    }
+    else if (choice == 2)
+    {
+        Script = FPaths::Combine(Dir, TEXT("PythonAPI"), TEXT("examples"), TEXT("wind-rain.py"));
+    }
+    else if (choice == 3)
+    {
+        Script = FPaths::Combine(Dir, TEXT("PythonAPI"), TEXT("examples"), TEXT("dark-rain.py"));
+    }
+    else if (choice == 4)
+    {
+        Script = FPaths::Combine(Dir, TEXT("PythonAPI"), TEXT("examples"), TEXT("dynamic_weather.py"));
+    }
+    else if (choice == 5)
+    {
+        Script = FPaths::Combine(Dir, TEXT("PythonAPI"), TEXT("examples"), TEXT("sun.py"));
+    }
+    else if (choice == 6)
+    {
+        Script = FPaths::Combine(Dir, TEXT("PythonAPI"), TEXT("examples"), TEXT("fog.py"));
+    }
+
+    Script = FPaths::ConvertRelativePathToFull(Script);
+
+    FString Params = FString::Printf(TEXT("\"%s\""), *Script);
+
+    FString Folder = FPaths::Combine(Dir, TEXT("PythonAPI"), TEXT("examples"));
+
+    // Launch the process
+    FProcHandle ProcHandle = FPlatformProcess::CreateProc(*Python, *Params, true, false, false, nullptr, 0, *Folder, nullptr);
+    if (ProcHandle.IsValid())
+    {
+        DEBUG_MSG("It Worked :-)");
+    }
+    else
+    {
+        DEBUG_MSG("Failed :-(");
+    }
+}
+

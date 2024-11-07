@@ -53,6 +53,12 @@ void UCustomFileDownloader::SetMaxLevel(float InMaxLevel)
     MaxLevel = InMaxLevel;
 }
 
+void UCustomFileDownloader::SetElevation(float InElevation)
+{
+    UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Elevation Set to value: %f"), InElevation);
+    Elevation = InElevation;
+}
+
 std::string regex_escape(const std::string& str)
 {
     static const std::regex specialChars(R"([.^$|()\\[*+?{}])");
@@ -69,52 +75,175 @@ std::string UCustomFileDownloader::PreProcess(const std::string& content)
     return content;
 }
 
-std::string UCustomFileDownloader::editElevation(const std::string& content)
+FString UCustomFileDownloader::OSMToXODR(FString FilePath)
 {
-    std::string elevationPattern = R"elevation(<elevation\s+s="([\d\.]+)"\s+a="([\d\.\-]+)"\s+b="([\d\.\-]+)"\s+c="([\d\.\-]+)"\s+d="([\d\.\-]+)"[^>]*>)elevation";
+    FilePath = FPaths::ConvertRelativePathToFull(FilePath);
+    FString Dir = FPaths::ProjectDir();
 
-    std::regex elevationRegex(elevationPattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
+    FString ScriptPath = FPaths::Combine(Dir, TEXT("Content"), TEXT("CSE498"), TEXT("osm2xodr-master"), TEXT("main.py"));
+    FString PythonCommand = TEXT("python");
 
-    std::ostringstream outputBuffer;
-    size_t lastPos = 0;
+    // output path
+    FString XODRFilePath = FPaths::Combine(Dir, TEXT("Content"), TEXT("CSE498"), TEXT("osm2xodr-master"), TEXT("output6.xodr"));
+    FString TopoMapPath = FPaths::Combine(Dir, TEXT("Content"), TEXT("CSE498"), TEXT("osm2xodr-master"), TEXT("topomap.png"));
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::uniform_real_distribution<> slopeDist(-0.001, 0.001);  // slope between needs to be way less than .02 add input limits in later
+    // call main.py with proper file paths 
+    FString Params = FString::Printf(TEXT("\"%s\" \"%s\" \"%s\" \"%s\""), *ScriptPath, *FilePath, *XODRFilePath, *TopoMapPath);
+    FString WorkingDirectory = FPaths::Combine(Dir, TEXT("Content"), TEXT("CSE498"), TEXT("osm2xodr-master"));
 
-    auto it = std::sregex_iterator(content.begin(), content.end(), elevationRegex);
-    auto end = std::sregex_iterator();
+    UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Main.py was called with these paths: %s"), *Params);
 
-    for (; it != end; ++it)
+    FProcHandle ProcHandle = FPlatformProcess::CreateProc(*PythonCommand, *Params, true, false, false, nullptr, 0, *WorkingDirectory, nullptr);
+    if (ProcHandle.IsValid())
     {
-        std::smatch match = *it;
-
-        float s = std::stof(match.str(1));
-        float a = std::stof(match.str(2));
-        float b = std::stof(match.str(3));
-        float c = std::stof(match.str(4));
-        float d = std::stof(match.str(5));
-
-        // Apply slope
-        float newA = a + slopeDist(gen);
-        float newB = b + slopeDist(gen);
-
-        std::string adjustedTag = "<elevation s=\"" + std::to_string(s) +
-            "\" a=\"" + std::to_string(newA) +
-            "\" b=\"" + std::to_string(newB) +
-            "\" c=\"" + std::to_string(c) +
-            "\" d=\"" + std::to_string(d) + "\"/>";
-
-        outputBuffer << content.substr(lastPos, match.position() - lastPos);
-
-        outputBuffer << adjustedTag;
-
-        lastPos = match.position() + match.length();
+        FPlatformProcess::WaitForProc(ProcHandle);
+        FPlatformProcess::CloseProc(ProcHandle);
+        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Topography script worked"));
+    }
+    else
+    {
+        UE_LOG(LogCarlaToolsMapGenerator, Error, TEXT("Topography script failed"));
+        return "";
     }
 
-    outputBuffer << content.substr(lastPos);
+    FString FileContent;
+    if (FFileHelper::LoadFileToString(FileContent, *XODRFilePath))
+    {
+        
+        if (FFileHelper::SaveStringToFile(FileContent, *XODRFilePath))
+        {
+            UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("saved XODR file."));
+        }
+        else
+        {
+            UE_LOG(LogCarlaToolsMapGenerator, Error, TEXT("Failed to save xodr file"));
+        }
+    }
+    else
+    {
+        UE_LOG(LogCarlaToolsMapGenerator, Error, TEXT("Failed to load XODR "));
+    }
 
-    return outputBuffer.str();
+    return FileContent;
+}
+
+std::string UCustomFileDownloader::editElevation(FString FilePath, std::string& content)
+{
+    if (Elevation == 20)
+    {
+        std::string NewContent = TCHAR_TO_UTF8(*OSMToXODR(FilePath));
+
+        std::string ElevationPattern = R"elevation(<elevation\s+s="([\d\.]+)"\s+a="([\d\.\-]+)"\s+b="([\d\.\-]+)"\s+c="([\d\.\-]+)"\s+d="([\d\.\-]+)"[^>]*>)elevation";
+        std::regex ElevationRegex(ElevationPattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
+
+        std::string ExtractedElevationData;
+        for (std::sregex_iterator it(NewContent.begin(), NewContent.end(), ElevationRegex), end; it != end; ++it)
+        {
+            ExtractedElevationData += it->str() + "\n";
+        }
+
+        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Extracted Elevation Data:\n%s"), *FString(ExtractedElevationData.c_str()));
+
+        std::string OriginalContentStr = content;
+        std::string UpdatedContent;
+
+        UpdatedContent = std::regex_replace(OriginalContentStr, ElevationRegex, ExtractedElevationData);
+
+        content = UpdatedContent;
+
+        std::string elevationPattern = R"elevation(<elevation\s+s="([\d\.]+)"\s+a="([\d\.\-]+)"\s+b="([\d\.\-]+)"\s+c="([\d\.\-]+)"\s+d="([\d\.\-]+)"[^>]*>)elevation";
+
+        std::regex elevationRegex(elevationPattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
+
+        std::ostringstream outputBuffer;
+        size_t lastPos = 0;
+
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<> slopeDist(0, Elevation / 1000);  // slope between needs to be way less than .02 add input limits in later
+
+        auto it = std::sregex_iterator(content.begin(), content.end(), elevationRegex);
+        auto end = std::sregex_iterator();
+
+        for (; it != end; ++it)
+        {
+            std::smatch match = *it;
+
+            float s = std::stof(match.str(1));
+            float a = std::stof(match.str(2));
+            float b = std::stof(match.str(3));
+            float c = std::stof(match.str(4));
+            float d = std::stof(match.str(5));
+
+            // Apply slope
+            //float newA = a + slopeDist(gen);
+            //float newB = b + slopeDist(gen);
+
+            std::string adjustedTag = "<elevation s=\"" + std::to_string(s) +
+                "\" a=\"" + std::to_string(a/10000) +
+                "\" b=\"" + std::to_string(b/10000) +
+                "\" c=\"" + std::to_string(c/10000) +
+                "\" d=\"" + std::to_string(d/10000) + "\"/>";
+
+            outputBuffer << content.substr(lastPos, match.position() - lastPos);
+
+            outputBuffer << adjustedTag;
+
+            lastPos = match.position() + match.length();
+        }
+
+        outputBuffer << content.substr(lastPos);
+
+        return outputBuffer.str();
+    }
+
+    else 
+    {
+        std::string elevationPattern = R"elevation(<elevation\s+s="([\d\.]+)"\s+a="([\d\.\-]+)"\s+b="([\d\.\-]+)"\s+c="([\d\.\-]+)"\s+d="([\d\.\-]+)"[^>]*>)elevation";
+
+        std::regex elevationRegex(elevationPattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
+
+        std::ostringstream outputBuffer;
+        size_t lastPos = 0;
+
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_real_distribution<> slopeDist(0, Elevation / 1000);  // slope needs to be way less than .02 add input limits in later
+
+        auto it = std::sregex_iterator(content.begin(), content.end(), elevationRegex);
+        auto end = std::sregex_iterator();
+
+        for (; it != end; ++it)
+        {
+            std::smatch match = *it;
+
+            float s = std::stof(match.str(1));
+            float a = std::stof(match.str(2));
+            float b = std::stof(match.str(3));
+            float c = std::stof(match.str(4));
+            float d = std::stof(match.str(5));
+
+            // New slopes
+            float newA = a + slopeDist(gen);
+            float newB = b + slopeDist(gen);
+
+            std::string adjustedTag = "<elevation s=\"" + std::to_string(s) +
+                "\" a=\"" + std::to_string(newA) +
+                "\" b=\"" + std::to_string(newB) +
+                "\" c=\"" + std::to_string(c) +
+                "\" d=\"" + std::to_string(d) + "\"/>";
+
+            outputBuffer << content.substr(lastPos, match.position() - lastPos);
+
+            outputBuffer << adjustedTag;
+
+            lastPos = match.position() + match.length();
+        }
+
+        outputBuffer << content.substr(lastPos);
+
+        return outputBuffer.str();
+    }
 }
 
 std::string UCustomFileDownloader::editBuildingAmount(const std::string& content)
@@ -338,11 +467,11 @@ void UCustomFileDownloader::ConvertOSMInOpenDrive(FString FilePath, float Lat_0,
     // First, read and process the OSM content to OpenDRIVE
     if (FFileHelper::LoadFileToString(FileContent, *FilePath, FFileHelper::EHashOptions::None))
     {
-        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("FileManipulation: Loaded OSM file: %s"), *FilePath);
+        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Loaded OSM file: %s"), *FilePath);
     }
     else
     {
-        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("FileManipulation: Failed to load OSM file"));
+        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Failed to load OSM file"));
         return;
     }
 
@@ -360,11 +489,11 @@ void UCustomFileDownloader::ConvertOSMInOpenDrive(FString FilePath, float Lat_0,
 
     if (FFileHelper::SaveStringToFile(FString(OpenDriveFile.c_str()), *FilePath))
     {
-        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("FileManipulation: Successfully Written: %s"), *FilePath);
+        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Successfully Written: %s"), *FilePath);
     }
     else
     {
-        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("FileManipulation: Failed to write OpenDRIVE file."));
+        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Failed to write OpenDRIVE file."));
         return;
     }
 
@@ -384,11 +513,11 @@ void UCustomFileDownloader::ConvertOSMInOpenDrive(FString FilePath, float Lat_0,
         // Save the edited OSM file
         if (FFileHelper::SaveStringToFile(FString(SavedFileContentStr.c_str()), *SavedFilePath))
         {
-            UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("FileManipulation: Successfully edited and saved OSM file: %s"), *SavedFilePath);
+            UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Successfully edited and saved OSM file: %s"), *SavedFilePath);
         }
         else
         {
-            UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("FileManipulation: Failed to save edited OSM file."));
+            UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Failed to save edited OSM file."));
         }
     }
 
@@ -397,8 +526,8 @@ void UCustomFileDownloader::ConvertOSMInOpenDrive(FString FilePath, float Lat_0,
         // Apply lane modification
         std::string XodrFileContentStr = std::string(TCHAR_TO_UTF8(*XodrFileContent));
         //XodrFileContentStr = editLanes(XodrFileContentStr, 1, 1);
-        XodrFileContentStr = editElevation(XodrFileContentStr);
-        // Save the modified OpenDRIVE file
+        XodrFileContentStr = editElevation(SavedFilePath, XodrFileContentStr);
+        
         if (FFileHelper::SaveStringToFile(FString(XodrFileContentStr.c_str()), *FilePath))
         {
             UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Successfully edited and saved OpenDRIVE file: %s"), *FilePath);
@@ -410,7 +539,7 @@ void UCustomFileDownloader::ConvertOSMInOpenDrive(FString FilePath, float Lat_0,
     }
     else
     {
-        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("FileManipulation: Failed to reload the saved OSM file."));
+        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Failed to reload the saved OSM file."));
     }
 }
 

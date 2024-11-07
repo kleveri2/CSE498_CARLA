@@ -117,6 +117,12 @@ void UOpenDriveToMap::SetMaxLevel(float InMaxLevel)
     UE_LOG(LogTemp, Warning, TEXT("Removal Percentage set to: %f"), InMaxLevel);
 }
 
+void UOpenDriveToMap::SetElevation(float InElevation)
+{
+    Elevation = InElevation;
+    UE_LOG(LogTemp, Warning, TEXT("Removal Percentage set to: %f"), InElevation);
+}
+
 FString LaneTypeToFString(carla::road::Lane::LaneType LaneType)
 {
   switch (LaneType)
@@ -220,6 +226,7 @@ void UOpenDriveToMap::CreateMap()
     FileDownloader->BuildSetMaxHeight(BuildMaxHeight);
     FileDownloader->SetMinLevel(MinLevel);
     FileDownloader->SetMaxLevel(MaxLevel);
+    FileDownloader->SetElevation(Elevation);
 
 
     FileDownloader->ResultFileName = MapName;

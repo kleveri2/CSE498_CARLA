@@ -1,4 +1,4 @@
-import carla
+
 import os
 import random
 import sys
@@ -16,6 +16,7 @@ try:
         'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
 except IndexError:
     pass
+import carla
 
 
 sys.path.append('C:\CSE498_CARLA\PythonAPI\carla')
