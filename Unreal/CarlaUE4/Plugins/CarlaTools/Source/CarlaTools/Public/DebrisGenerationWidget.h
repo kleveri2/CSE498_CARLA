@@ -27,5 +27,6 @@ public:
 		void ClearDebris();
 	UFUNCTION(BlueprintCallable)
 		static UWorld* MyGetWorld();
-
+	UFUNCTION(BlueprintCallable)
+		static void OverWriteMesh(UStaticMesh* Mesh, UStaticMesh* NewMesh);
 };

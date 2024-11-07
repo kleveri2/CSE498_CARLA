@@ -64,3 +64,14 @@ UWorld* UDebrisGenerationWidget::MyGetWorld() {
     DEBUG_MSG("No world")
     return nullptr;
 }
+
+void UDebrisGenerationWidget::OverWriteMesh(UStaticMesh* Mesh, UStaticMesh* NewMesh)
+{
+    // From: https://forums.unrealengine.com/t/is-it-possible-to-render-mesh-passed-to-niagara/648742/10
+    FMeshDescription& Okay = *NewMesh->GetMeshDescription(0);
+    const FStaticMeshLODResources& Lod = NewMesh->GetLODForExport(0);
+
+    TArray<const FMeshDescription*> MeshDescriptionPtrs;
+    MeshDescriptionPtrs.Emplace(&Okay);
+    Mesh->BuildFromMeshDescriptions(MeshDescriptionPtrs);
+}
