@@ -28,5 +28,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 		static UWorld* MyGetWorld();
 	UFUNCTION(BlueprintCallable)
-		static void OverWriteMesh(UStaticMesh* Mesh, UStaticMesh* NewMesh);
+		void OverWriteMesh(UStaticMesh* Mesh, UStaticMesh* NewMesh);
+	UFUNCTION(BlueprintCallable)
+		void Weather(float choice);
+
 };

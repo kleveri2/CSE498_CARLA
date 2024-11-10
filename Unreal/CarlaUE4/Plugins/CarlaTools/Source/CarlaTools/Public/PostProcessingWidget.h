@@ -9,7 +9,8 @@
 /**
  * 
  */
-UCLASS()
+
+UCLASS(BlueprintType)
 class CARLATOOLS_API UPostProcessingWidget : public UEditorUtilityWidget
 {
 	GENERATED_BODY()
@@ -22,5 +23,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 		void Regenerate();
+
+	
 	
 };

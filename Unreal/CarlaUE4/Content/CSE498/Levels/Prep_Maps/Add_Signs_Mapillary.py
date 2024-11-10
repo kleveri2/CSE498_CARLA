@@ -1,4 +1,5 @@
 import requests, json, mercantile
+from pyproj import Proj, Transformer
 
 # Mapillary access token -- provide your own, replace this example
 mly_key = 'MLY|8567666719993755|2b50c7e210332948405be7a5d6533ccc'
@@ -46,6 +47,10 @@ def fetch_features(south, west, north, east):
     else:
         print("Failed to connect: ", response.status_code)
     return features
+
+# def Convert_Coordinates(features):
+#
+#     return 0
 
 
 def main():
