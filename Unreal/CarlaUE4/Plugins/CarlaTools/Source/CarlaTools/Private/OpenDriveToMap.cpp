@@ -676,12 +676,14 @@ void UOpenDriveToMap::GenerateRoadMesh( const boost::optional<carla::road::Map>&
       if(PairMap.first == carla::road::Lane::LaneType::Sidewalk)
       {
         UStaticMesh* MeshToSet = UMapGenFunctionLibrary::CreateMesh(MeshData,  Tangents, DefaultSidewalksMaterial, MapName, "DrivingLane", FName(TEXT("SM_SidewalkMesh" + FString::FromInt(index) + GetStringForCurrentTile() )));
+        MeshToSet->bAllowCPUAccess = true;
         StaticMeshComponent->SetStaticMesh(MeshToSet);
       }
 
       if(PairMap.first == carla::road::Lane::LaneType::Driving)
       {
         UStaticMesh* MeshToSet = UMapGenFunctionLibrary::CreateMesh(MeshData,  Tangents, DefaultRoadMaterial, MapName, "DrivingLane", FName(TEXT("SM_DrivingLaneMesh" + FString::FromInt(index) + GetStringForCurrentTile() )));
+        MeshToSet->bAllowCPUAccess = true;
         StaticMeshComponent->SetStaticMesh(MeshToSet);
       }
       TempActor->SetActorLocation(MeshCentroid * 100);
