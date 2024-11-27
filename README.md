@@ -3,8 +3,6 @@ To install this software, first install this repository in the same way CARLA is
 - Windows: https://carla.readthedocs.io/en/latest/build_windows/
 - Linux: https://carla.readthedocs.io/en/latest/build_linux/
 
-Once this repository has been built from source following the steps above, some additional configurations must be made.
-
 # Manual Map Generation
 Follow the steps below to generate a map of a manually-selected real-world location:
 1. Open the map generation widget located at "CarlaToolsContent/OnroadMapGenerator/UW_OnRoadMainWidget". To see "CarlaToolsContent", the "Show Plugin Content" option must be enabled in the Content Browser's View Options.
