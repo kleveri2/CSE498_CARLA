@@ -20,7 +20,7 @@ Follow the steps below to generate a map of a manually-selected real-world locat
 11. Click "Generate".
 
 # Automatic Map Finder Setup
-1. Open a command prompt terminal
+1. Open a command prompt terminal.
 2. Navigate to the installed unreal engines independant python3s win64 folder.
      A typical example of this location (if you've installed unreal into the root C drive) is:
      C:\UnrealEngine\Engine\Binaries\ThirdParty\Python3\Win64
@@ -36,7 +36,7 @@ Instead of manually selecting a real-world location to generate a map from, the 
 3. Enter a filename for the generated map in the "File Name" field.
 4. Apply any desired pre-processing options (see the Pre-Processing section below).
 5. Click "Find and Generate Map".
-6. When a map is generated in this manner, sign data (positions) is automatically recorded
+6. When a map is generated in this manner, sign data (positions) is automatically recorded.
 7. The recorded sign locations are then placed automatically at runtime.
    NOTE: In their current state the signs lack rotation.
 
