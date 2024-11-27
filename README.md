@@ -5,8 +5,6 @@ To install this software, first install this repository in the same way CARLA is
 
 Once this repository has been built from source following the steps above, some additional configurations must be made.
 
-[TODO: Gabe explain Python package installation for automatic map finder. Or remove this section if you can insert your batch file into one that already must be run to install CARLA.]
-
 # Manual Map Generation
 Follow the steps below to generate a map of a manually-selected real-world location:
 1. Open the map generation widget located at "CarlaToolsContent/OnroadMapGenerator/UW_OnRoadMainWidget". To see "CarlaToolsContent", the "Show Plugin Content" option must be enabled in the Content Browser's View Options.
@@ -21,6 +19,16 @@ Follow the steps below to generate a map of a manually-selected real-world locat
 10. Apply any desired pre-processing options (see the Pre-Processing section below).
 11. Click "Generate".
 
+# Automatic Map Finder Setup
+1. Open a command prompt terminal
+2. Navigate to the installed unreal engines independant python3s win64 folder.
+     A typical example of this location (if you've installed unreal into the root C drive) is:
+     C:\UnrealEngine\Engine\Binaries\ThirdParty\Python3\Win64
+3. Run the following commands in any order:
+     python.exe -m pip install osmnx
+     python.exe -m pip install geopy
+     python.exe -m pip install mercantile
+
 # Automatic Map Finder
 Instead of manually selecting a real-world location to generate a map from, the software may search for a suitable area with a specific road density. Follow the steps below to use this functionality:
 1. Complete steps 1 and 2 of manual map generation (opening the OnRoadMainWidget).
@@ -28,8 +36,9 @@ Instead of manually selecting a real-world location to generate a map from, the 
 3. Enter a filename for the generated map in the "File Name" field.
 4. Apply any desired pre-processing options (see the Pre-Processing section below).
 5. Click "Find and Generate Map".
-
-[TODO: Gabe explain how generating signs works]
+6. When a map is generated in this manner, sign data (positions) is automatically recorded
+7. The recorded sign locations are then placed automatically at runtime.
+   NOTE: In their current state the signs lack rotation.
 
 # Pre-Processing
 Pre-processing allows for modification of the real-world Open Street Map data before the map is generated. This is used for assets that are difficult to modify once the map is generated such as buildings and terrain.
