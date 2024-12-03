@@ -58,6 +58,12 @@ public:
   UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
       float Elevation;
 
+  UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
+      float Mult;
+
+  UFUNCTION(BlueprintCallable)
+      void SetMult(float InMult);
+
   UFUNCTION(BlueprintCallable)
       void SetElevation(float InElevation);
 

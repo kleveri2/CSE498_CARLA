@@ -123,6 +123,12 @@ void UOpenDriveToMap::SetElevation(float InElevation)
     UE_LOG(LogTemp, Warning, TEXT("Removal Percentage set to: %f"), InElevation);
 }
 
+void UOpenDriveToMap::SetMult(float InMult)
+{
+    Mult = InMult;
+    UE_LOG(LogTemp, Warning, TEXT("Multiplier set to: %f"), InMult);
+}
+
 FString LaneTypeToFString(carla::road::Lane::LaneType LaneType)
 {
   switch (LaneType)
@@ -227,6 +233,7 @@ void UOpenDriveToMap::CreateMap()
     FileDownloader->SetMinLevel(MinLevel);
     FileDownloader->SetMaxLevel(MaxLevel);
     FileDownloader->SetElevation(Elevation);
+    FileDownloader->SetMultiplyer(Mult);
 
 
     FileDownloader->ResultFileName = MapName;

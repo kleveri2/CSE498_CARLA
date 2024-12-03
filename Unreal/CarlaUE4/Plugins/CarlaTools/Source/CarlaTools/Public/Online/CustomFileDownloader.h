@@ -67,9 +67,6 @@ public:
   std::string editBuildingAmount(const std::string& content);
   std::string editBuildingLevels(const std::string& content, int minLevels, int maxLevels);
   std::string editBuildingHeights(const std::string& content, float minHeight, float maxHeight);
-
-  std::string editLanes(const std::string& content, float minLanes, float maxLanes);
-
   std::string PreProcess(const std::string& content);
 
   FString OSMToXODR(FString FilePath);
@@ -109,6 +106,12 @@ public:
 
   UFUNCTION(BlueprintCallable)
       void SetElevation(float InElevation);
+
+  UFUNCTION(BlueprintCallable)
+      void SetMultiplyer(float Mult);
+
+  UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
+      float Multi;
 
   FDownloadComplete DownloadDelegate;
 private:

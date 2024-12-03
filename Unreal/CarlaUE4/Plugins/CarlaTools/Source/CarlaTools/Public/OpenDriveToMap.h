@@ -185,6 +185,12 @@ public:
   UFUNCTION(BlueprintCallable)
       void SetRemovalPercentage(float InPercentage);
 
+  UFUNCTION(BlueprintCallable)
+      void SetMult(float InMult);
+
+  UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
+      float Mult;
+
   UPROPERTY(BlueprintReadWrite, Category = "Preprocessing")
       float BuildMinHeight;
 

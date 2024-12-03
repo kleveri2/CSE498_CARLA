@@ -70,6 +70,12 @@ void UDigitalTwinsBaseWidget::SetElevation(float InElevation)
     UE_LOG(LogTemp, Warning, TEXT("Elevation set to: %f"), Elevation );
 }
 
+void UDigitalTwinsBaseWidget::SetMult(float InMult)
+{
+    Mult = InMult;
+    UE_LOG(LogTemp, Warning, TEXT("multiplyer set to: %f"), Mult);
+}
+
 float UDigitalTwinsBaseWidget::GetRemovalPercentage()
 {
     UE_LOG(LogTemp, Warning, TEXT("Getting removal Percentage: %f"), RemovalPercentage);
@@ -87,6 +93,7 @@ void UDigitalTwinsBaseWidget::PassDigitalTwinsBaseWidgetToOpenDrive(UOpenDriveTo
         OpenDriveInstance->SetMinLevel(MinLevel);
         OpenDriveInstance->SetMaxLevel(MaxLevel);
         OpenDriveInstance->SetElevation(Elevation);
+        OpenDriveInstance->SetMult(Mult);
         UE_LOG(LogTemp, Warning, TEXT("DigitalTwinsBaseWidget passed to OpenDriveToMap."));
     }
     else

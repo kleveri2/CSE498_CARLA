@@ -29,6 +29,12 @@ void UCustomFileDownloader::SetRemovalPercentage(float Percentage)
     RemovalPercentage = Percentage;
 }
 
+void UCustomFileDownloader::SetMultiplyer(float Mult)
+{
+    UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("custom file Multiplyer Set to value: %f"), Multi);
+    Multi = Mult;
+}
+
 void UCustomFileDownloader::BuildSetMinHeight(float InMinHeight)
 {
     UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Min Height Set to value: %f"), InMinHeight);
@@ -72,7 +78,7 @@ std::string UCustomFileDownloader::PreProcess(const std::string& content)
     result = editBuildingLevels(result, MinLevel, MaxLevel);
 
 
-    return content;
+    return result;
 }
 
 FString UCustomFileDownloader::OSMToXODR(FString FilePath)
@@ -247,58 +253,43 @@ std::string UCustomFileDownloader::editElevation(FString FilePath, std::string& 
 }
 
 std::string UCustomFileDownloader::editBuildingAmount(const std::string& content)
-{   
+{
     UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Editing buildings with Percentage value: %f"), RemovalPercentage);
 
-    if (content.empty())
-    {
+    if (content.empty()) {
         UE_LOG(LogCarlaToolsMapGenerator, Error, TEXT("Content is empty, skipping regex."));
         return content;
     }
 
-    if (RemovalPercentage == 0)
-    {
-        return content;  // No changes needed if percentage is 0
-    }
-
-    // Validate RemovalPercentage
-    if (RemovalPercentage < 0 || RemovalPercentage > 1)
-    {
+    if (RemovalPercentage <= 0 || RemovalPercentage > 1) {
         UE_LOG(LogCarlaToolsMapGenerator, Error, TEXT("Invalid RemovalPercentage: %f"), RemovalPercentage);
         return content;
     }
 
     std::vector<std::string> buildingList;
-
-    try
-    {
-        std::string buildingTagPattern = R"(<tag k="building"[^>]*>)";
-
-        std::regex WayAndRelationWithBuildingTagPattern(buildingTagPattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
-        auto it = std::sregex_iterator(content.begin(), content.end(), WayAndRelationWithBuildingTagPattern);
+    try {
+        std::string buildingTagPattern = R"(<way[^>]*>[\s\S]*?<tag k="building"[^>]*>[\s\S]*?</way>)";
+        std::regex WayWithBuildingTagPattern(buildingTagPattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
+        auto it = std::sregex_iterator(content.begin(), content.end(), WayWithBuildingTagPattern);
         auto end = std::sregex_iterator();
 
-        // Create building list
-        for (; it != end; ++it)
-        {
+        for (; it != end; ++it) {
             buildingList.push_back(it->str());
         }
     }
-    catch (const std::regex_error& e)
-    {
+    catch (const std::regex_error& e) {
         UE_LOG(LogCarlaToolsMapGenerator, Error, TEXT("Regex error: %s"), *FString(e.what()));
         return content;
     }
 
-    // Check if we have any buildings to process
-    if (buildingList.empty())
-    {
-        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("No buildings found in the content."));
+    if (buildingList.empty()) {
+        UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("No buildings"));
         return content;
     }
 
     int totalBuildings = buildingList.size();
-    int buildingsToRemove = static_cast<int>(totalBuildings * (1-RemovalPercentage));
+    int buildingsToRemove = static_cast<int>(totalBuildings * RemovalPercentage);
+    UE_LOG(LogCarlaToolsMapGenerator, Warning, TEXT("Removed Buildings"));
 
     // Shuffle building list to remove randomly
     std::random_device rd;
@@ -306,16 +297,11 @@ std::string UCustomFileDownloader::editBuildingAmount(const std::string& content
     std::shuffle(buildingList.begin(), buildingList.end(), gen);
 
     std::string result = content;
-
-    // Remove the buildings
-    for (int i = 0; i < buildingsToRemove; ++i)
-    {
-        try
-        {
+    for (int i = 0; i < buildingsToRemove; ++i) {
+        try {
             result = std::regex_replace(result, std::regex(regex_escape(buildingList[i])), "");
         }
-        catch (const std::regex_error& e)
-        {
+        catch (const std::regex_error& e) {
             UE_LOG(LogCarlaToolsMapGenerator, Error, TEXT("Regex replacement error: %s"), *FString(e.what()));
             return result;  // Return current result if replacement fails
         }
@@ -327,11 +313,10 @@ std::string UCustomFileDownloader::editBuildingAmount(const std::string& content
 
 std::string UCustomFileDownloader::editBuildingLevels(const std::string& content, int minLevels, int maxLevels)
 {
-    int buildingHeightMultiplier = 1;
    
     std::string buildingLevelsPattern = "<tag k=\"building:levels\" v=\"(\\d+)\"[^>]*>";
 
-    // find all <tag k="building:levels" v="X"/> elements
+    // find all buildings
     std::regex levelsPattern(buildingLevelsPattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
 
     // Use a regex iterator to collect all matches
@@ -341,22 +326,20 @@ std::string UCustomFileDownloader::editBuildingLevels(const std::string& content
 
     for (; it != end; ++it)
     {
-        // Extract the current number of levels
+        // get current height
         std::string matchedTag = it->str();
         int currentLevel = std::stoi(it->str(1));
 
-        currentLevel *= buildingHeightMultiplier;
-
+        currentLevel *= Multi;
+    //set max height
         int adjustedLevel = std::max(currentLevel, minLevels);
 
         
         if (maxLevels > 0)
         {
+            //set min height
             adjustedLevel = std::min(adjustedLevel, maxLevels);
         }
-
-        // level adjustment
-        //int adjustedLevel = std::min(std::max(currentLevel, minLevels), maxLevels);
 
         std::string adjustedTag = "<tag k=\"building:levels\" v=\"" + std::to_string(adjustedLevel) + "\"/>";
 
@@ -367,46 +350,9 @@ std::string UCustomFileDownloader::editBuildingLevels(const std::string& content
     return result;
 }
 
-std::string UCustomFileDownloader::editLanes(const std::string& content, float minLanes, float maxLanes)
-{
-    std::string lanePattern = "<tag k=\"lanes\" v=\"([\\d\\.]+)\"[^>]*>"; 
-
-    // Use regex to find all <tag k="lanes" v="X"/> elements
-    std::regex laneRegex(lanePattern, std::regex_constants::ECMAScript | std::regex_constants::icase);
-
-    std::ostringstream outputBuffer;
-    size_t lastPos = 0;
-
-    auto it = std::sregex_iterator(content.begin(), content.end(), laneRegex);
-    auto end = std::sregex_iterator();
-
-    for (; it != end; ++it)
-    {
-        std::smatch match = *it;
-
-        // Extract the current lane value
-        std::string matchedTag = match.str();
-        float currentLanes = std::stof(match.str(1));
-
-        // Adjust the lanes
-        float adjustedLanes = std::min(std::max(currentLanes, minLanes), maxLanes);
-
-        std::string adjustedTag = "<tag k=\"lanes\" v=\"" + std::to_string(adjustedLanes) + "\"/>";
-
-        outputBuffer << content.substr(lastPos, match.position() - lastPos);
-        outputBuffer << adjustedTag;
-
-        lastPos = match.position() + match.length();
-    }
-
-    outputBuffer << content.substr(lastPos);
-
-    return outputBuffer.str();
-}
 
 std::string UCustomFileDownloader::editBuildingHeights(const std::string& content, float minHeight, float maxHeight)
 {
-    int buildingHeightMultiplier = 1;
    
     std::string heightPattern = "<tag k=\"height\" v=\"([\\d\\.]+)\"[^>]*>";
 
@@ -425,7 +371,7 @@ std::string UCustomFileDownloader::editBuildingHeights(const std::string& conten
         std::string matchedTag = match.str();
         float currentHeight = std::stof(match.str(1));  
 
-        currentHeight *= buildingHeightMultiplier;
+        currentHeight *= Multi;
 
         
         float adjustedHeight = std::max(currentHeight, minHeight);
@@ -507,8 +453,8 @@ void UCustomFileDownloader::ConvertOSMInOpenDrive(FString FilePath, float Lat_0,
     if (FFileHelper::LoadFileToString(SavedFileContent, *SavedFilePath, FFileHelper::EHashOptions::None))
     {
         std::string SavedFileContentStr = std::string(TCHAR_TO_UTF8(*SavedFileContent));
+        //Apply Pre processing to the file
         SavedFileContentStr = PreProcess(SavedFileContentStr);
-        //SavedFileContentStr = editLanes(SavedFileContentStr, 1, 1);
 
         // Save the edited OSM file
         if (FFileHelper::SaveStringToFile(FString(SavedFileContentStr.c_str()), *SavedFilePath))
@@ -523,9 +469,8 @@ void UCustomFileDownloader::ConvertOSMInOpenDrive(FString FilePath, float Lat_0,
 
     if (FFileHelper::LoadFileToString(XodrFileContent, *FilePath))
     {
-        // Apply lane modification
+        // Apply Elevation Modification
         std::string XodrFileContentStr = std::string(TCHAR_TO_UTF8(*XodrFileContent));
-        //XodrFileContentStr = editLanes(XodrFileContentStr, 1, 1);
         XodrFileContentStr = editElevation(SavedFilePath, XodrFileContentStr);
         
         if (FFileHelper::SaveStringToFile(FString(XodrFileContentStr.c_str()), *FilePath))
