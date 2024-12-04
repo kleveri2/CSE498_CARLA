@@ -26,6 +26,9 @@ Follow the steps below to generate a map of a manually-selected real-world locat
      python.exe -m pip install osmnx
      python.exe -m pip install geopy
      python.exe -m pip install mercantile
+4. To configure for automated stop sign placement, navigat to your equivilant of C:\CSE498_CARLA\Unreal\CarlaUE4\Plugins\CarlaTools\Content\Python\Retrieve_CoordsY.py
+     Replace the filepath with your own to reach prep_maps
+     Do the same for Retrieve_CoordsX.py
 
 # Automatic Map Finder
 Instead of manually selecting a real-world location to generate a map from, the software may search for a suitable area with a specific road density. Follow the steps below to use this functionality:
